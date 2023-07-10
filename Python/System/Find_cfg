@@ -1,0 +1,23 @@
+import glob, os
+import pandas as pd
+
+path = 'C:\\Users\\neal.peng\\Documents\\Pandas\\System\\'
+MyDir1 = "N:\sysprod\Systems Infomation\Compact Configurations"
+MyDir2 = "N:\sysprod\Systems Infomation\EM4x Configurations"
+
+ConfigFilenames = []
+EM4XFilenames = []
+
+os.chdir(MyDir1)
+for file in glob.glob("*.sm3x"):
+    ConfigFilenames.append(file)
+
+os.chdir(MyDir2)
+for file in glob.glob("*.em4x"):
+    EM4XFilenames.append(file)
+    
+ConfigFilenames.extend(EM4XFilenames)
+#print(ConfigFilenames)
+
+Cfg = pd.DataFrame(data={'Config File Name': ConfigFilenames})
+Cfg.to_excel(path + 'cfgnames.xlsx')
