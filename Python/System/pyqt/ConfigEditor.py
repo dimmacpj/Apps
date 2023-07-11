@@ -3,6 +3,7 @@ from PyQt5 import QtGui
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
+from pyqt_checkbox_list_widget.checkBoxListWidget import CheckBoxListWidget
 
 #create setting dicts
 settingNodes = ['Part Number and Region', 'AC input and DC output cables and connectors', 'Front panel interface', 'Charger labelling',
@@ -259,11 +260,13 @@ class mainWin(QMainWindow):
         #create check boxes
         regCheckboxWidget1 = QWidget()
         regCheckboxLO1 = QGridLayout()
-        regPosiBox1 = [(i, j) for i in range(5) for j in range(4)]
+        '''regPosiBox1 = [(i, j) for i in range(5) for j in range(4)]
         for position1, locale in zip(regPosiBox1, localeList):
             self.localeCBox = QCheckBox(locale)
-            regCheckboxLO1.addWidget(self.localeCBox, *position1)
-            self.localeCBox.stateChanged.connect(self.chBoxState(localeCheckStateList))
+            regCheckboxLO1.addWidget(self.localeCBox, *position1)'''
+        self.localeChBoxList = CheckBoxListWidget()
+        self.localeChBoxList.addItems(localeList)
+        regCheckboxLO1.addWidget(self.localeChBoxList)
         regCheckboxWidget1.setLayout(regCheckboxLO1)
         regionLayout.addWidget(regCheckboxWidget1,3,1)
         regionWidget.setLayout(regionLayout)
@@ -307,7 +310,7 @@ class mainWin(QMainWindow):
         fpWidget.setLayout(fpLayout)
         self.stackedLO.addWidget(fpWidget)
 
-#create widget for label  (check box)
+#create widget for label  (save done)
         labelWidget = QWidget()
         labelLayout = QGridLayout()
         #create labels
@@ -317,9 +320,12 @@ class mainWin(QMainWindow):
         #create checkboxes
         labCheckboxWidget = QWidget()
         labCheckboxLO = QVBoxLayout()
-        for battTpye in ulBattOption:
-            labelBox = QCheckBox(battTpye)
-            labCheckboxLO.addWidget(labelBox)
+        #self.ulBattChBox = QCheckBox('check all')
+        self.ulBattChBoxList = CheckBoxListWidget()
+        self.ulBattChBoxList.addItems(ulBattOption)
+        #self.ulBattChBox.stateChanged.connect(self.ulBattChBoxList.toggleState)
+        #labCheckboxLO.addWidget(self.ulBattChBox)
+        labCheckboxLO.addWidget(self.ulBattChBoxList)
         labCheckboxWidget.setLayout(labCheckboxLO)
         labelLayout.addWidget(labCheckboxWidget,1,1)
         labelWidget.setLayout(labelLayout)
@@ -440,8 +446,12 @@ class mainWin(QMainWindow):
         widgetLO.addWidget(newBoX,startRow,1)
         return newBoX
 #function to check the state of check box
-    def chBoxState(self, stateList):
-        stateList.append(self.localeCBox.isChecked())
+    def chBoxState(self, stateList, optionList):
+        print(stateList)
+        resultList = []
+        for i in range(len(stateList)):
+            resultList.append(optionList[stateList[i]])    
+        return resultList
 #function to switch right hand widgets according to the clicked item in the left hand list
     def listClicked(self, item):
         for i in range(len(settingNodes)):
@@ -459,6 +469,7 @@ class mainWin(QMainWindow):
         configPN = self.regEdit.text() 
         tznVal = self.tzncomBox.currentText()
         lnVal = self.lncomBox.currentText()
+        localeCheckStateList = self.chBoxState(self.localeChBoxList.getCheckedRows(), localeList)
         #ACDC settings
         acShow = self.showACcomBox.currentText()
         dcShow = self.showDCcomBox.currentText()
@@ -475,6 +486,7 @@ class mainWin(QMainWindow):
         eualOverride = self.eualise.currentText()
         #Label settings
         battType = self.battTypeComBox.currentText()
+        battCheckStateList = self.chBoxState(self.ulBattChBoxList.getCheckedRows(), ulBattOption)
         #Batt settings
         battTemp = self.tempName.text()
         battTempList = self.tempList.toPlainText()
@@ -498,7 +510,11 @@ class mainWin(QMainWindow):
         #New node
         newNode = self.nodeInput.toPlainText()
         #save to XML
-        print(configPN, tznVal, lnVal, localeCheckStateList, acShow, dcShow, cableName, cableLength,autoBP, acThreshold, acMax, dpRestart, todOverride, dpOPTest, sdOverride, eualOverride, battType, battCheckStateList, battTemp, battTempList, modType, fsVal, mmcountVal, fmcVal, mmcurrentVal, dcVal, psEnable, psMin, psMax,modMaxV, newNode, extraEntry)
+        print(configPN, tznVal, lnVal, localeCheckStateList, acShow, dcShow, cableName,
+               cableLength,autoBP, acThreshold, acMax, dpRestart, todOverride, dpOPTest,
+               sdOverride, eualOverride, battType, battCheckStateList, battTemp, battTempList,
+               modType, fsVal, mmcountVal, fmcVal, mmcurrentVal, dcVal, psEnable, psMin, psMax,
+               modMaxV, newNode, extraEntry)
     def createXML(self):
         print('placeholder')
     def closeEvent(self, event):
