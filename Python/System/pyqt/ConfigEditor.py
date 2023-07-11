@@ -61,7 +61,8 @@ maxCurrentList = ['48', '85', '120']
 regionCbox = [timeZoneList, localeList]
 acdcCbox = [booLeanList, booLeanList, cableNameList, cableLengthList, booLeanList]
 cabCbox = [frameSizeList, maxModuleCountList, fixModuleConfigList, maxCurrentList, booLeanList]
-
+localeCheckStateList = []
+battCheckStateList = []
 
 #customize Qwidget class
 '''class cenWidget(QWidget):
@@ -253,26 +254,32 @@ class mainWin(QMainWindow):
         self.regEdit = QLineEdit()    
         regionLayout.addWidget(self.regEdit,0,1)
         #create comboBoxes
-        self.createComBox(regionCbox, regionLayout, 1)
+        self.tzncomBox = self.getBoX(timeZoneList,regionLayout,1)
+        self.lncomBox = self.getBoX(localeList,regionLayout,2)
         #create check boxes
         regCheckboxWidget1 = QWidget()
         regCheckboxLO1 = QGridLayout()
         regPosiBox1 = [(i, j) for i in range(5) for j in range(4)]
         for position1, locale in zip(regPosiBox1, localeList):
-            localeCBox = QCheckBox(locale)
-            regCheckboxLO1.addWidget(localeCBox, *position1)
+            self.localeCBox = QCheckBox(locale)
+            regCheckboxLO1.addWidget(self.localeCBox, *position1)
+            self.localeCBox.stateChanged.connect(self.chBoxState(localeCheckStateList))
         regCheckboxWidget1.setLayout(regCheckboxLO1)
         regionLayout.addWidget(regCheckboxWidget1,3,1)
         regionWidget.setLayout(regionLayout)
         self.stackedLO.addWidget(regionWidget)
 
-#create ac dc widget, need tab view (combo)
+#create ac dc widget, need tab view (save done)
         acdcWidget = QWidget()
         acdcLayout = QGridLayout()
         #create labels
         self.createLabel(acdcInfo, acdcLayout)
         #create comboBoxes
-        self.createComBox(acdcCbox, acdcLayout, 0)
+        self.showACcomBox = self.getBoX(booLeanList,acdcLayout,0)
+        self.showDCcomBox = self.getBoX(booLeanList,acdcLayout,1)
+        self.cncomBox = self.getBoX(cableNameList,acdcLayout,2)
+        self.clcomBox = self.getBoX(cableLengthList,acdcLayout,3)
+        self.abpcomBox = self.getBoX(booLeanList,acdcLayout,4)
         #create input line
         self.acdcLineEdit1 = QLineEdit()    
         acdcLayout.addWidget(self.acdcLineEdit1,5,1)
@@ -282,7 +289,7 @@ class mainWin(QMainWindow):
         acdcWidget.setLayout(acdcLayout)
         self.stackedLO.addWidget(acdcWidget)
 
-#create widget for front panel setting  (combox)
+#create widget for front panel setting (save done)
         fpWidget = QWidget()
         fpLayout = QGridLayout()
         self.createLabel(fpInfo, fpLayout)
@@ -298,18 +305,6 @@ class mainWin(QMainWindow):
         self.eualise.setCurrentIndex(0)
         fpLayout.setRowStretch(5, 1)
         fpWidget.setLayout(fpLayout)
-        '''fpLayout = QVBoxLayout()
-        for fpkey, fpNum in zip(fpInfo.keys(), range(len(fpInfo))):
-            fpHBox = QHBoxLayout()
-            fpLabel = QLabel(fpkey)
-            fpLabel.setToolTip(fpInfo[fpkey])
-            fpHBox.addWidget(fpLabel)
-            fpComBox = QComboBox()
-            fpComBox.addItems(booLeanList)
-            fpHBox.addWidget(fpComBox)
-            fpLayout.addLayout(fpHBox)
-        fpLayout.addStretch(1)
-        fpWidget.setLayout(fpLayout)'''
         self.stackedLO.addWidget(fpWidget)
 
 #create widget for label  (check box)
@@ -344,7 +339,7 @@ class mainWin(QMainWindow):
         templateWidget.setLayout(templateLayout)
         self.stackedLO.addWidget(templateWidget)
 
-#create widget for cabinet (combo)
+#create widget for cabinet (save done)
         cabWidget = QWidget()
         cabLayout = QGridLayout()
         #create labels
@@ -353,7 +348,11 @@ class mainWin(QMainWindow):
         self.cabInput1 = QLineEdit()
         cabLayout.addWidget(self.cabInput1,0,1)
         #create combobox
-        self.createComBox(cabCbox, cabLayout, 1)
+        self.fscombBox = self.getBoX(frameSizeList,cabLayout,1)
+        self.mmcountcombBox = self.getBoX(maxModuleCountList,cabLayout,2)
+        self.fmccombBox = self.getBoX(fixModuleConfigList,cabLayout,3)
+        self.mmcurrntcombBox = self.getBoX(maxCurrentList,cabLayout,4)
+        self.dccombBox = self.getBoX(booLeanList,cabLayout,5)
         cabWidget.setLayout(cabLayout)
         self.stackedLO.addWidget(cabWidget)
 
@@ -440,6 +439,9 @@ class mainWin(QMainWindow):
         newBoX.setCurrentIndex(-1)
         widgetLO.addWidget(newBoX,startRow,1)
         return newBoX
+#function to check the state of check box
+    def chBoxState(self, stateList):
+        stateList.append(self.localeCBox.isChecked())
 #function to switch right hand widgets according to the clicked item in the left hand list
     def listClicked(self, item):
         for i in range(len(settingNodes)):
@@ -455,7 +457,14 @@ class mainWin(QMainWindow):
     def settingSave(self):
         #Region settings
         configPN = self.regEdit.text() 
+        tznVal = self.tzncomBox.currentText()
+        lnVal = self.lncomBox.currentText()
         #ACDC settings
+        acShow = self.showACcomBox.currentText()
+        dcShow = self.showDCcomBox.currentText()
+        cableName = self.cncomBox.currentText()
+        cableLength = self.clcomBox.currentText()
+        autoBP = self.abpcomBox.currentText()
         acThreshold = self.acdcLineEdit1.text()
         acMax = self.acdcLineEdit2.text()
         #FP settings
@@ -471,8 +480,15 @@ class mainWin(QMainWindow):
         battTempList = self.tempList.toPlainText()
         #Cabinet settings
         modType = self.cabInput1.text()
+        fsVal = self.fscombBox.currentText()
+        mmcountVal = self.mmcountcombBox.currentText()
+        fmcVal = self.fmccombBox.currentText()
+        mmcurrentVal = self.mmcurrntcombBox.currentText()
+        dcVal = self.dccombBox.currentText()
         #Advanced settings
         psEnable = self.psComBox.currentText()
+        psMin = ''
+        psMax = ''
         if psEnable == 'true':
             psMin = self.advInput1.text()
             psMax = self.advInput2.text()
@@ -482,7 +498,7 @@ class mainWin(QMainWindow):
         #New node
         newNode = self.nodeInput.toPlainText()
         #save to XML
-        print(configPN, acThreshold, acMax, dpRestart, todOverride, dpOPTest, sdOverride, eualOverride, battType, battTemp, battTempList, modType, psEnable, psMin, psMax,modMaxV, newNode, extraEntry)
+        print(configPN, tznVal, lnVal, localeCheckStateList, acShow, dcShow, cableName, cableLength,autoBP, acThreshold, acMax, dpRestart, todOverride, dpOPTest, sdOverride, eualOverride, battType, battCheckStateList, battTemp, battTempList, modType, fsVal, mmcountVal, fmcVal, mmcurrentVal, dcVal, psEnable, psMin, psMax,modMaxV, newNode, extraEntry)
     def createXML(self):
         print('placeholder')
     def closeEvent(self, event):
