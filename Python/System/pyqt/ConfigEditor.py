@@ -64,37 +64,7 @@ acdcCbox = [booLeanList, booLeanList, cableNameList, cableLengthList, booLeanLis
 cabCbox = [frameSizeList, maxModuleCountList, fixModuleConfigList, maxCurrentList, booLeanList]
 localeCheckStateList = []
 battCheckStateList = []
-
-#customize Qwidget class
-'''class cenWidget(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.initUI()
-
-    def initUI(self):
-        
-        QToolTip.setFont(QFont('SansSerif', 10))
-        QLabel.setFont(self, QFont('SansSerif', 13))
-        #creat box layout to manage layouts within this widget
-        hBox = QHBoxLayout()
-        self.setLayout(hBox)
-        #create a list of main settings
-        listWidget = QListWidget(self)
-        listWidget.setMinimumWidth(400)
-        listWidget.addItems(settingNodes)
-        hBox.addWidget(listWidget,0,Qt.AlignLeft)
-        #create a widget to populate sub-setting, this widget use grid layout and contain labels and edit txt
-        regionWidget = QWidget()
-        regionGrid = QGridLayout()
-        regionWidget.setLayout(regionGrid)
-        #create labels and add into grid
-        for key in regionInfo:
-            regionLab = QLabel(key, self)
-            regionLab.setFrameStyle(QFrame.Panel | QFrame.Sunken)
-            regionGrid.addWidget(regionLab)
-
-        hBox.addWidget(regionWidget)
-        regionWidget.hide()'''        
+       
 #customize tab view widget class
 '''class tabWidget(QTabWidget):
 
@@ -127,76 +97,6 @@ battCheckStateList = []
         self.advancedInfoUI()
         self.extraEntryUI()
         self.addNewNodeUI()
-
-    def regionInfoUI(self):
-        layout = QFormLayout()
-        for key in regionInfo:
-            formLabel = QLabel(key)
-            formLabel.setToolTip(regionInfo[key])
-            layout.addRow(formLabel, QLineEdit())
-        self.regionTab.setLayout(layout)
-    
-    def acdcInfoUI(self):
-        layout = QFormLayout()
-        for key in acdcInfo:
-            formLabel = QLabel(key)
-            formLabel.setToolTip(acdcInfo[key])
-            layout.addRow(formLabel, QLineEdit())
-        self.acdcTab.setLayout(layout)
-
-    def fpInfoUI(self):
-        layout = QFormLayout()
-        for key in fpInfo:
-            formLabel = QLabel(key)
-            formLabel.setToolTip(fpInfo[key])
-            layout.addRow(formLabel, QLineEdit())
-        self.fpTab.setLayout(layout)
-    
-    def labelInfoUI(self):
-        layout = QFormLayout()
-        for key in labelInfo:
-            formLabel = QLabel(key)
-            formLabel.setToolTip(labelInfo[key])
-            layout.addRow(formLabel, QLineEdit())
-        self.labelTab.setLayout(layout)
-
-    def templateInfoUI(self):
-        layout = QFormLayout()
-        for key in templateInfo:
-            formLabel = QLabel(key)
-            formLabel.setToolTip(templateInfo[key])
-            layout.addRow(formLabel, QLineEdit())
-        self.templateTab.setLayout(layout)
-
-    def cabinetInfoUI(self):
-        layout = QFormLayout()
-        for key in cabinetInfo:
-            formLabel = QLabel(key)
-            formLabel.setToolTip(cabinetInfo[key])
-            layout.addRow(formLabel, QLineEdit())
-        self.cabinetTab.setLayout(layout)
-
-    def advancedInfoUI(self):
-        layout = QFormLayout()
-        for key in advancedInfo:
-            formLabel = QLabel(key)
-            formLabel.setToolTip(advancedInfo[key])
-            layout.addRow(formLabel, QLineEdit())
-        self.advancedTab.setLayout(layout)
-
-    def extraEntryUI(self):
-        layout = QFormLayout()
-        for key in extraEntry:
-            formLabel = QLabel(key)
-            formLabel.setToolTip(extraEntry[key])
-            layout.addRow(formLabel, QLineEdit())
-        self.extraTab.setLayout(layout)
-
-    def addNewNodeUI(self):
-        layout = QHBoxLayout()
-        textArea = QTextEdit()
-        layout.addWidget(textArea)
-        self.newTab.setLayout(layout)
 '''
 #customize stackedlayout class
 '''class stackLO(QStackedLayout):
@@ -260,10 +160,6 @@ class mainWin(QMainWindow):
         #create check boxes
         regCheckboxWidget1 = QWidget()
         regCheckboxLO1 = QGridLayout()
-        '''regPosiBox1 = [(i, j) for i in range(5) for j in range(4)]
-        for position1, locale in zip(regPosiBox1, localeList):
-            self.localeCBox = QCheckBox(locale)
-            regCheckboxLO1.addWidget(self.localeCBox, *position1)'''
         self.localeChBoxList = CheckBoxListWidget()
         self.localeChBoxList.addItems(localeList)
         regCheckboxLO1.addWidget(self.localeChBoxList)
@@ -430,14 +326,6 @@ class mainWin(QMainWindow):
             widgetLabel = QLabel(dictKey)
             widgetLabel.setToolTip(labelDict[dictKey])
             widgetLO.addWidget(widgetLabel)
-#function to create a set of comboboxes according to the given list
-    def createComBox(self, ddList, widgetLO, startRow):
-        for subList in ddList:    
-            newComboBox = QComboBox()
-            newComboBox.addItems(subList)
-            newComboBox.setCurrentIndex(-1)
-            widgetLO.addWidget(newComboBox,startRow,1)
-            startRow += 1            
 #function to create a single combobox
     def getBoX(self, dList, widgetLO, startRow):
         newBoX = QComboBox()
@@ -447,7 +335,6 @@ class mainWin(QMainWindow):
         return newBoX
 #function to check the state of check box
     def chBoxState(self, stateList, optionList):
-        print(stateList)
         resultList = []
         for i in range(len(stateList)):
             resultList.append(optionList[stateList[i]])    
