@@ -6,6 +6,7 @@ import random
 def createTree():
     tree = ET.parse('C:\\Users\\neal.peng\\Documents\\Works\\Motive\\MP BoM+Config creation\\G3 1P configs\\SOC-MPG31VAU-A0\\SOC-MPG31VAU-A0.xml')
     root = tree.getroot()
+    print(root.tag, root.attrib)
     print(root.find('entry').find('value').text)
     root.findall('.//*[@key="charger.ACCable"]/value')[0].text = random.randrange(8)
     print(root.findall('.//*[@key="charger.ACCable"]/value')[0].text)
