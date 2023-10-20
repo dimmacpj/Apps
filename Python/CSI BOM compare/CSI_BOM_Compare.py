@@ -13,7 +13,7 @@ SecondBom = input()
 #print('Excel name of second BOM, include extension:')
 #SecondBomFileName = input()
 
-path = 'C:\\Users\\neal.peng\\Documents\\Pandas\\CSI BOM compare\\'
+path = 'C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\'
 
 BOMOne = pd.read_excel(path + FirstBom + '.xlsx', usecols=['Item', 'Description', 'Ref Designator'])
 BOMTwo = pd.read_excel(path + SecondBom + '.xlsx', usecols=['Item', 'Description', 'Ref Designator'])
@@ -22,6 +22,7 @@ LengthOne = len(BOMOne)
 LengthTwo = len(BOMTwo)
 
 BOMOne.index = [FirstBom]*LengthOne
+print(BOMOne.index)
 BOMTwo.index = [SecondBom]*LengthTwo
 
 #BOMOne = BOMOne.sort_values(['Item', 'Ref Designator'], ignore_index=True)
