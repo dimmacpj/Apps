@@ -1,34 +1,55 @@
+#To do
+#Add save file dialog
+#add pop up when save file without data in Result
 import sys
 from pathlib import Path
-import typing
-from PyQt5 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget
-from pyqt_checkbox_list_widget.checkBoxListWidget import CheckBoxListWidget
-import numpy as np
 import pandas as pd
 
-class mainWin(QMainWindow):
+class TableModel(QtCore.QAbstractTableModel):
+
+    def __init__(self, data):
+        super(TableModel, self).__init__()
+        self._data = data
+
+    def data(self, index, role):
+        if role == Qt.DisplayRole:
+            value = self._data.iloc[index.row(), index.column()]
+            return str(value)
+
+    def rowCount(self, index):
+        return self._data.shape[0]
+
+    def columnCount(self, index):
+        return self._data.shape[1]
+
+    def headerData(self, col, orientation, role):
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            return self._data.columns[col]
+        return None
+
+class mainWin(QtWidgets.QMainWindow):
     
     def __init__(self):
         super().__init__()
         self.initWin()
 
     def initWin(self):
+#create menu bar button
+        saveResult = QAction('Save to .xlsx file', self)
+        saveResult.setShortcut('Ctrl + S')
+        saveResult.triggered.connect(self.saveToXLSX)
+#create menu bar and add the button
+        menuBar = self.menuBar()
+        saveMenu = menuBar.addMenu('&Save Result')
+        saveMenu.addAction(saveResult)
 #set up main layout
         mainWidget = QWidget(self)
         vBoxMain = QVBoxLayout()
-#create Compare and Close buttons
-        buttonBox = QHBoxLayout()
-        buttonBox.addStretch(2)
-        closeButton = QPushButton('Close')
-        closeButton.clicked.connect(qApp.quit)
-        compareButton = QPushButton('Compare')
-        compareButton.clicked.connect(self.compareBoMs)
-        buttonBox.addWidget(closeButton)
-        buttonBox.addWidget(compareButton)
 #First BoM excel path
         bomBox1 = QVBoxLayout()
         #bomBox1.addStretch(2)
@@ -61,11 +82,17 @@ class mainWin(QMainWindow):
         bomBox2.addLayout(hBox2)
         
 #Compare result table
-        self.resultTable = QTableWidget()
-        #self.resultTable.setRowCount(30)
-        #self.resultTable.setColumnCount(5)
+        self.resultTable = QtWidgets.QTableView()     
         #self.resultTable.horizontalHeader().setStretchLastSection(True)
-        
+#create Compare and Close buttons
+        buttonBox = QHBoxLayout()
+        buttonBox.addStretch(2)
+        closeButton = QPushButton('Close')
+        closeButton.clicked.connect(qApp.quit)
+        compareButton = QPushButton('Compare')
+        compareButton.clicked.connect(self.compareBoMs)
+        buttonBox.addWidget(closeButton)
+        buttonBox.addWidget(compareButton)        
 #add all of above components into main layout
         vBoxMain.addLayout(bomBox1)
         vBoxMain.addLayout(bomBox2)
@@ -86,20 +113,29 @@ class mainWin(QMainWindow):
         cp = QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
         self.move(qr.topLeft())
+#function to compare result to xlsx
+    def saveToXLSX(self):
+        self.Result.to_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\Result.xlsx')
 #function to compare two BoMs
     def compareBoMs(self):
         path1 = self.bom1Path.text()
         path2 = self.bom2Path.text()
-        BOMOne = pd.read_excel(path1, usecols=['Item', 'Description', 'Ref Designator'])
-        BOMTwo = pd.read_excel(path2, usecols=['Item', 'Description', 'Ref Designator'])
+        BOMOne = pd.read_excel(path1, usecols=['Level','Item', 'Description', 'Ref Designator'],
+                   dtype={'Level': str, 'Item': str, 'Description': str, 'Ref Designator': str}).dropna(
+                       how='all').reset_index(drop=True)
+        BOMTwo = pd.read_excel(path2, usecols=['Level','Item', 'Description', 'Ref Designator'],
+                   dtype={'Level': str, 'Item': str, 'Description': str, 'Ref Designator': str}).dropna(
+                       how='all').reset_index(drop=True)
         LengthOne = len(BOMOne)
         LengthTwo = len(BOMTwo)
         BoM1Name = Path(path1).stem
         BoM2Name = Path(path2).stem
         BOMOne.index = [BoM1Name]*LengthOne
         BOMTwo.index = [BoM2Name]*LengthTwo
-        Result = pd.concat([BOMOne,BOMTwo]).drop_duplicates(keep=False).sort_values('Ref Designator')
-        Result.to_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\Result.xlsx')
+        self.Result = pd.concat([BOMOne,BOMTwo]).drop_duplicates(keep=False).sort_values('Ref Designator')
+        self.model = TableModel(self.Result)
+        self.resultTable.setModel(self.model)
+        
 
 #function to open excel file
     def openFile1(self):
@@ -113,6 +149,13 @@ class mainWin(QMainWindow):
             path2 = Path(excelFile2)
             self.bom2Path.setText(str(path2))     
 
+    def closeEvent(self, event):
+        reply = QMessageBox.question(self, 'Message', 'Are you sure to quit?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            event.accept()
+        else:
+            event.ignore()
+
 def main():
     app = QApplication(sys.argv)
     app.setFont(QFont('Arial', 9))
@@ -122,4 +165,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

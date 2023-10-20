@@ -7,6 +7,9 @@ df = pd.DataFrame({'a': ['Mary', 'Jim', 'John'],
                    'b': [100, 200, 300],
                    'c': ['a', 'b', 'c']})
 
+df = pd.read_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\THT-MPG3BPJU-04.xlsx', usecols=['Level','Item', 'Description', 'Ref Designator'],
+                   dtype={'Level': str, 'Item': str, 'Description': str, 'Ref Designator': str}).dropna(how='all').reset_index(drop=True)
+print(df)
 class pandasModel(QAbstractTableModel):
 
     def __init__(self, data):
