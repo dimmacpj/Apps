@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget
 import pandas as pd
+import numpy as np
 
 class TableModel(QtCore.QAbstractTableModel):
 
@@ -51,39 +52,11 @@ class mainWin(QtWidgets.QMainWindow):
         mainWidget = QWidget(self)
         vBoxMain = QVBoxLayout()
 #First BoM excel path
-        bomBox1 = QVBoxLayout()
-        #bomBox1.addStretch(2)
-        bom1Label = QLabel('Open the excel file of the first Indented Current BoM')
-        bomBox1.addWidget(bom1Label)
-        hBox1 = QHBoxLayout()
-        self.bom1Path = QLineEdit()
-        self.bom1Path.setFixedSize(600,25)
-        hBox1.addWidget(self.bom1Path)
-        hBox1.addStretch()
-        bom1Button = QPushButton('Open')
-        bom1Button.clicked.connect(self.openFile1)
-        hBox1.addWidget(bom1Button)
-        bomBox1.addLayout(hBox1)
-        
+        bomBox1 = self.createBoMPathWidget('Open the excel file of the first Indented Current BoM', 1)
 #Second BoM excel path
-        bomBox2 = QVBoxLayout()
-        #bomBox2.addStretch(2)
-        bom2Label = QLabel('Open the excel file of the second Indented Current BoM')
-       
-        bomBox2.addWidget(bom2Label)
-        hBox2 = QHBoxLayout()
-        self.bom2Path = QLineEdit()
-        self.bom2Path.setFixedSize(600,25)
-        hBox2.addWidget(self.bom2Path)
-        hBox2.addStretch()
-        bom2Button = QPushButton('Open')
-        bom2Button.clicked.connect(self.openFile2)
-        hBox2.addWidget(bom2Button)
-        bomBox2.addLayout(hBox2)
-        
+        bomBox2 = self.createBoMPathWidget('Open the excel file of the second Indented Current BoM', 2)
 #Compare result table
         self.resultTable = QtWidgets.QTableView()     
-        #self.resultTable.horizontalHeader().setStretchLastSection(True)
 #create Compare and Close buttons
         buttonBox = QHBoxLayout()
         buttonBox.addStretch(2)
@@ -101,9 +74,8 @@ class mainWin(QtWidgets.QMainWindow):
         vBoxMain.addLayout(buttonBox)
         mainWidget.setLayout(vBoxMain)
         self.setCentralWidget(mainWidget)
-
 #set main window size and position
-        self.resize(800, 500)
+        self.resize(1600, 1000)
         self.setWindowTitle('BoM Compare')
         self.center()
         self.show()
@@ -118,37 +90,53 @@ class mainWin(QtWidgets.QMainWindow):
         self.Result.to_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\Result.xlsx')
 #function to compare two BoMs
     def compareBoMs(self):
-        path1 = self.bom1Path.text()
-        path2 = self.bom2Path.text()
+        path1 = self.bomPath1.text()
+        path2 = self.bomPath2.text()
         BOMOne = pd.read_excel(path1, usecols=['Level','Item', 'Description', 'Ref Designator'],
                    dtype={'Level': str, 'Item': str, 'Description': str, 'Ref Designator': str}).dropna(
                        how='all').reset_index(drop=True)
+        df1 = BOMOne.sort_values(by=['Level', 'Ref Designator']).reset_index(drop=True)
         BOMTwo = pd.read_excel(path2, usecols=['Level','Item', 'Description', 'Ref Designator'],
                    dtype={'Level': str, 'Item': str, 'Description': str, 'Ref Designator': str}).dropna(
                        how='all').reset_index(drop=True)
-        LengthOne = len(BOMOne)
-        LengthTwo = len(BOMTwo)
-        BoM1Name = Path(path1).stem
-        BoM2Name = Path(path2).stem
-        BOMOne.index = [BoM1Name]*LengthOne
-        BOMTwo.index = [BoM2Name]*LengthTwo
-        self.Result = pd.concat([BOMOne,BOMTwo]).drop_duplicates(keep=False).sort_values('Ref Designator')
+        df2 = BOMTwo.sort_values(by=['Level', 'Ref Designator']).reset_index(drop=True)
+        self.Result = df1.merge(df2, on=['Level', 'Ref Designator'], how='outer').replace(np.nan, None)
         self.model = TableModel(self.Result)
         self.resultTable.setModel(self.model)
-        
-
-#function to open excel file
-    def openFile1(self):
-        excelFile1, unUse1 = QFileDialog.getOpenFileName(self, 'Select a File', r'C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\','Excel (*.xlsx)')
-        if excelFile1:
-            path1 = Path(excelFile1)
-            self.bom1Path.setText(str(path1))
-    def openFile2(self):
-        excelFile2, unUse2 = QFileDialog.getOpenFileName(self, 'Select a File', r'C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\','Excel (*.xlsx)')
-        if excelFile2:
-            path2 = Path(excelFile2)
-            self.bom2Path.setText(str(path2))     
-
+#function to create BoM path widget
+    def createBoMPathWidget(self, labelText, order):
+        bomBox = QVBoxLayout()
+        bomLabel = QLabel(labelText)
+        bomBox.addWidget(bomLabel)
+        hBox = QHBoxLayout()
+        if order == 1:
+            self.bomPath1 = QLineEdit()
+            self.bomPath1.setFixedSize(1000,25)
+            hBox.addWidget(self.bomPath1)
+            hBox.addStretch()
+            bomButton1 = QPushButton('Open')
+            bomButton1.clicked.connect(lambda ch,order=order: self.openFile(order))
+            hBox.addWidget(bomButton1)
+        elif order == 2:
+            self.bomPath2 = QLineEdit()
+            self.bomPath2.setFixedSize(1000,25)
+            hBox.addWidget(self.bomPath2)
+            hBox.addStretch()
+            bomButton2 = QPushButton('Open')
+            bomButton2.clicked.connect(lambda ch,order=order: self.openFile(order))
+            hBox.addWidget(bomButton2)
+        bomBox.addLayout(hBox)
+        return bomBox
+#function to open excel file path
+    def openFile(self, buttonNumber):
+        excelFile, unUse = QFileDialog.getOpenFileName(self, 'Select a File', r'C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\','Excel (*.xlsx)')
+        if excelFile:
+            path = Path(excelFile)
+            if buttonNumber == 1:
+                self.bomPath1.setText(str(path))  
+            elif buttonNumber == 2:
+                self.bomPath2.setText(str(path))
+#function to inform close app
     def closeEvent(self, event):
         reply = QMessageBox.question(self, 'Message', 'Are you sure to quit?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if reply == QMessageBox.Yes:
@@ -165,3 +153,31 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+'''bomBox1 = QVBoxLayout()
+        bom1Label = QLabel('Open the excel file of the first Indented Current BoM')
+        bomBox1.addWidget(bom1Label)
+        hBox1 = QHBoxLayout()
+        self.bom1Path = QLineEdit()
+        self.bom1Path.setFixedSize(600,25)
+        hBox1.addWidget(self.bom1Path)
+        hBox1.addStretch()
+        bom1Button = QPushButton('Open')
+        bom1Button.clicked.connect(self.openFile1)
+        hBox1.addWidget(bom1Button)
+        bomBox1.addLayout(hBox1)
+        
+#Second BoM excel path
+        bomBox2 = QVBoxLayout()
+        bom2Label = QLabel('Open the excel file of the second Indented Current BoM')
+        bomBox2.addWidget(bom2Label)
+        hBox2 = QHBoxLayout()
+        self.bom2Path = QLineEdit()
+        self.bom2Path.setFixedSize(600,25)
+        hBox2.addWidget(self.bom2Path)
+        hBox2.addStretch()
+        bom2Button = QPushButton('Open')
+        bom2Button.clicked.connect(self.openFile2)
+        hBox2.addWidget(bom2Button)
+        bomBox2.addLayout(hBox2)'''
