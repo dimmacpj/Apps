@@ -4,6 +4,17 @@ from PyQt5.QtWidgets import QApplication, QTableView
 from PyQt5.QtCore import QAbstractTableModel, Qt
 import numpy as np
 
+def highlight_diff(row):
+    if row['Item_x'] != row['Item_y']:
+        color = 'red'
+    
+    background = ['background-color: {}'.format(color) for _ in row]
+
+    return background
+
+    
+
+
 BoMNAME1 = pd.read_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\THT-MPG3BPJU-03.xlsx').iloc[0,0]
 #print(BoMNAME1)
 BoMNAME2 = pd.read_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\THT-MPG3BPJU-04.xlsx').iloc[0,0]
@@ -22,6 +33,19 @@ df4 = df3.sort_values(by=['Level','Ref Designator']).reset_index(drop=True)
 #print(df4)
 
 bommerge = df2.merge(df4, on=['Level', 'Ref Designator'], how='outer').replace(np.nan, None)
+bommerge['New'] = np.where(bommerge['Item_x'] != bommerge['Item_y'], 'Attention!', '')
+print(bommerge)
+bommerge.to_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\Result.xlsx')
+'''
+diff = bommerge['Item_x'].compare(bommerge['Item_y'])
+print(diff)
+listindex = range(len(diff.index))
+for i in range(len(diff.index)):
+    diffbom = pd.DataFrame([])
+    diffbom = pd.concat([diffbom, bommerge.loc[diff.index[i]]])
+
+print(diffbom)
+'''
 #print(bommerge)
 #bomjoin = df2.set_index(['Level', 'Ref Designator']).join(df4.set_index(['Level', 'Ref Designator']), how='inner', lsuffix=BoMNAME1, rsuffix=BoMNAME2)
 #print(bomjoin)
@@ -48,6 +72,7 @@ levelonecompare = levelone1.set_index('Ref Designator').join(levelone2.set_index
 print(levelonecompare)
 #levelZeroDiff.to_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\Result.xlsx')
 '''
+
 class pandasModel(QAbstractTableModel):
 
     def __init__(self, data):

@@ -101,6 +101,7 @@ class mainWin(QtWidgets.QMainWindow):
                        how='all').reset_index(drop=True)
         df2 = BOMTwo.sort_values(by=['Level', 'Ref Designator']).reset_index(drop=True)
         self.Result = df1.merge(df2, on=['Level', 'Ref Designator'], how='outer').replace(np.nan, None)
+        self.Result['Different Part'] = np.where(self.Result['Item_x'] != self.Result['Item_y'], 'Yes!!!', '')
         self.model = TableModel(self.Result)
         self.resultTable.setModel(self.model)
 #function to create BoM path widget
@@ -153,31 +154,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-'''bomBox1 = QVBoxLayout()
-        bom1Label = QLabel('Open the excel file of the first Indented Current BoM')
-        bomBox1.addWidget(bom1Label)
-        hBox1 = QHBoxLayout()
-        self.bom1Path = QLineEdit()
-        self.bom1Path.setFixedSize(600,25)
-        hBox1.addWidget(self.bom1Path)
-        hBox1.addStretch()
-        bom1Button = QPushButton('Open')
-        bom1Button.clicked.connect(self.openFile1)
-        hBox1.addWidget(bom1Button)
-        bomBox1.addLayout(hBox1)
-        
-#Second BoM excel path
-        bomBox2 = QVBoxLayout()
-        bom2Label = QLabel('Open the excel file of the second Indented Current BoM')
-        bomBox2.addWidget(bom2Label)
-        hBox2 = QHBoxLayout()
-        self.bom2Path = QLineEdit()
-        self.bom2Path.setFixedSize(600,25)
-        hBox2.addWidget(self.bom2Path)
-        hBox2.addStretch()
-        bom2Button = QPushButton('Open')
-        bom2Button.clicked.connect(self.openFile2)
-        hBox2.addWidget(bom2Button)
-        bomBox2.addLayout(hBox2)'''
