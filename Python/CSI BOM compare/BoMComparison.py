@@ -40,6 +40,7 @@ class mainWin(QtWidgets.QMainWindow):
         self.initWin()
 
     def initWin(self):
+        self.ResultLength = 0
 #create menu bar button
         saveResult = QAction('Save to .xlsx file', self)
         saveResult.setShortcut('Ctrl + S')
@@ -56,7 +57,15 @@ class mainWin(QtWidgets.QMainWindow):
 #Second BoM excel path
         bomBox2 = self.createBoMPathWidget('Open the excel file of the second Indented Current BoM', 2)
 #Compare result table
-        self.resultTable = QtWidgets.QTableView()     
+        self.resultTable = QTableWidget()
+        #self.resultTable = QtWidgets.QTableView()
+        self.resultTable.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContentsOnFirstShow)
+        self.resultTable.horizontalHeader().sectionResizeMode(QHeaderView.Stretch)
+        headerFont = self.resultTable.horizontalHeader().font()
+        headerFont.setBold(True)
+        self.resultTable.horizontalHeader().setFont(headerFont)
+        self.resultTable.setWordWrap(True) 
+        
 #create Compare and Close buttons
         buttonBox = QHBoxLayout()
         buttonBox.addStretch(2)
@@ -101,9 +110,26 @@ class mainWin(QtWidgets.QMainWindow):
                        how='all').reset_index(drop=True)
         df2 = BOMTwo.sort_values(by=['Level', 'Ref Designator']).reset_index(drop=True)
         self.Result = df1.merge(df2, on=['Level', 'Ref Designator'], how='outer').replace(np.nan, None)
-        self.Result['Different Part'] = np.where(self.Result['Item_x'] != self.Result['Item_y'], 'Yes!!!', '')
-        self.model = TableModel(self.Result)
-        self.resultTable.setModel(self.model)
+        #self.ResultLength = len(self.Result)
+        #self.Result['Different Part'] = np.where(self.Result['Item_x'] != self.Result['Item_y'], 'Yes!!!', '')
+        #self.model = TableModel(self.Result)
+        #self.resultTable.setModel(self.model)
+        row = len(self.Result)
+        colums = len(self.Result.columns)
+        self.resultTable.setRowCount(row)
+        self.resultTable.setColumnCount(colums)
+        self.resultTable.setHorizontalHeaderLabels(self.Result.columns)
+        for i in range(row):
+            for j in range(colums):
+                item = QTableWidgetItem(str(self.Result.iloc[i,j]))
+                self.resultTable.setItem(i,j,item)
+            bom1PN = str(self.Result.iloc[i,1])
+            bom2PN = str(self.Result.iloc[i,4])
+            if bom1PN != bom2PN:
+                ref = QTableWidgetItem(str(self.Result.iloc[i,3]))
+                ref.setBackground(QBrush(Qt.red))
+                self.resultTable.setItem(i,3,ref)
+
 #function to create BoM path widget
     def createBoMPathWidget(self, labelText, order):
         bomBox = QVBoxLayout()

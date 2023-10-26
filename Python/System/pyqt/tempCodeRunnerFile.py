@@ -1,1 +1,1 @@
-)
+bommerge['New'] = np.where(bommerge['Item_x'] != bommerge['Item_y'], 'Attention!', '')

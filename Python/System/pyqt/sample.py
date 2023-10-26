@@ -13,6 +13,9 @@ class TableModel(QtCore.QAbstractTableModel):
     def data(self, index, role):
         if role == Qt.DisplayRole:
             value = self._data.iloc[index.row(), index.column()]
+            value1 = self._data.iloc[index.row()+1,index.column()]
+            print(value)
+            print(value1)
             return str(value)
 
     def rowCount(self, index):

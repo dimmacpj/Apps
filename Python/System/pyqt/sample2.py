@@ -1,19 +1,9 @@
 import sys
 import pandas as pd
-from PyQt5.QtWidgets import QApplication, QTableView
+from PyQt5.QtWidgets import QApplication, QTableView, QHeaderView, QMainWindow,QTableWidget,QTableWidgetItem
 from PyQt5.QtCore import QAbstractTableModel, Qt
 import numpy as np
-
-def highlight_diff(row):
-    if row['Item_x'] != row['Item_y']:
-        color = 'red'
-    
-    background = ['background-color: {}'.format(color) for _ in row]
-
-    return background
-
-    
-
+from PyQt5.QtGui import *
 
 BoMNAME1 = pd.read_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\THT-MPG3BPJU-03.xlsx').iloc[0,0]
 #print(BoMNAME1)
@@ -34,7 +24,8 @@ df4 = df3.sort_values(by=['Level','Ref Designator']).reset_index(drop=True)
 
 bommerge = df2.merge(df4, on=['Level', 'Ref Designator'], how='outer').replace(np.nan, None)
 bommerge['New'] = np.where(bommerge['Item_x'] != bommerge['Item_y'], 'Attention!', '')
-print(bommerge)
+tablelength = len(bommerge)
+
 bommerge.to_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\Result.xlsx')
 '''
 diff = bommerge['Item_x'].compare(bommerge['Item_y'])
@@ -73,6 +64,8 @@ print(levelonecompare)
 #levelZeroDiff.to_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\Result.xlsx')
 '''
 
+
+
 class pandasModel(QAbstractTableModel):
 
     def __init__(self, data):
@@ -105,9 +98,41 @@ class pandasModel(QAbstractTableModel):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    
+    windows = QMainWindow()
+    view = QTableWidget()
+    windows.setCentralWidget(view)
+    view.setRowCount(len(bommerge))
+    view.setColumnCount(len(bommerge.columns))
+    view.setHorizontalHeaderLabels(bommerge.columns)
+    for i in range(len(bommerge)):
+        for j in range(len(bommerge.columns)):
+            item = QTableWidgetItem(str(bommerge.iloc[i,j]))
+            view.setItem(i,j,item)
+        bom1PN = str(bommerge.iloc[i,1])
+        bom2PN = str(bommerge.iloc[i,4])
+        if bom1PN != bom2PN:
+            ref = QTableWidgetItem(str(bommerge.iloc[i,3]))
+            ref.setBackground(QBrush(Qt.red))
+            view.setItem(i,3,ref)
+    windows.show()
+    sys.exit(app.exec_())
+
+'''    
     model = pandasModel(bommerge)
     view = QTableView()
+    view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+    font = view.horizontalHeader().font()
+    font.setBold(True)
+    view.horizontalHeader().setFont(font)
     view.setModel(model)
-    view.resize(800, 600)
+    for i in range(tablelength):
+        value1 = view.model().index(i,1).data()
+        value2 = view.model().index(i,4).data()
+        if value1 != value2:
+
+            print(view.model().index(i,3).data())
+    view.resize(1200, 600)
     view.show()
     sys.exit(app.exec_())
+'''
