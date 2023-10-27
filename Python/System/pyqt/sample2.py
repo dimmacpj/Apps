@@ -5,28 +5,35 @@ from PyQt5.QtCore import QAbstractTableModel, Qt
 import numpy as np
 from PyQt5.QtGui import *
 
-BoMNAME1 = pd.read_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\THT-MPG3BPJU-03.xlsx').iloc[0,0]
+BoMNAME1 = pd.read_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\RM1524HE-08.xlsx').iloc[0,0]
 #print(BoMNAME1)
-BoMNAME2 = pd.read_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\THT-MPG3BPJU-04.xlsx').iloc[0,0]
+BoMNAME2 = pd.read_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\RM1524HE-09.xlsx').iloc[0,0]
 #print(BoMNAME2)
-df1 = pd.read_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\THT-MPG3BPJU-03.xlsx', usecols=['Level','Item', 'Description', 'Ref Designator'],
+df1 = pd.read_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\RM1524HE-08.xlsx', usecols=['Level','Item', 'Description', 'Ref Designator'],
                    dtype={'Level': str, 'Item': str, 'Description': str, 'Ref Designator': str}).dropna(how='all').reset_index(drop=True)
 #new_row = pd.DataFrame({'Level':'Nan', 'Item':BoMNAME, 'Description':'Nan', 'Ref Designator':'Nan'}, index = [0])
 
-df2 = df1.sort_values(by=['Level','Ref Designator']).reset_index(drop=True)
+df2 = df1.sort_values(by=['Level','Ref Designator','Item']).reset_index(drop=True)
 #print(df2)
+#df2.to_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\df2.xlsx')
 
-
-df3 = pd.read_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\THT-MPG3BPJU-04.xlsx', usecols=['Level','Item', 'Description', 'Ref Designator'],
+df3 = pd.read_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\RM1524HE-09.xlsx', usecols=['Level','Item', 'Description', 'Ref Designator'],
                    dtype={'Level': str, 'Item': str, 'Description': str, 'Ref Designator': str}).dropna(how='all').reset_index(drop=True)
-df4 = df3.sort_values(by=['Level','Ref Designator']).reset_index(drop=True)
+df4 = df3.sort_values(by=['Level','Ref Designator','Item']).reset_index(drop=True)
 #print(df4)
+#df4.to_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\df4.xlsx')
+#bommerge = pd.concat([df2, df4], axis=1)
+bommerge = df2.merge(df4, left_on=['Level', 'Ref Designator','Item'], right_on=['Level', 'Ref Designator','Item'], how='outer',suffixes=('_'+BoMNAME1,'_'+BoMNAME2)).replace(np.nan, 'None')
+bommerge = bommerge.sort_values(by=['Level','Ref Designator','Item'])
+bommerge = bommerge.drop_duplicates(subset=['Item','Description_'+BoMNAME1,'Ref Designator','Description_'+BoMNAME2])
 
-bommerge = df2.merge(df4, on=['Level', 'Ref Designator'], how='outer').replace(np.nan, None)
-bommerge['New'] = np.where(bommerge['Item_x'] != bommerge['Item_y'], 'Attention!', '')
+#bommerge['New'] = np.where(bommerge['Item_x'] != bommerge['Item_y'], 'Attention!', '')
 tablelength = len(bommerge)
+#print(bommerge)
 
-bommerge.to_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\Result.xlsx')
+print(tablelength)
+
+#bommerge.to_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\Result.xlsx')
 '''
 diff = bommerge['Item_x'].compare(bommerge['Item_y'])
 print(diff)
@@ -105,11 +112,12 @@ if __name__ == '__main__':
     view.setRowCount(len(bommerge))
     view.setColumnCount(len(bommerge.columns))
     view.setHorizontalHeaderLabels(bommerge.columns)
+    
     for i in range(len(bommerge)):
         for j in range(len(bommerge.columns)):
             item = QTableWidgetItem(str(bommerge.iloc[i,j]))
             view.setItem(i,j,item)
-        bom1PN = str(bommerge.iloc[i,1])
+        bom1PN = str(bommerge.iloc[i,2])
         bom2PN = str(bommerge.iloc[i,4])
         if bom1PN != bom2PN:
             ref = QTableWidgetItem(str(bommerge.iloc[i,3]))
@@ -117,6 +125,27 @@ if __name__ == '__main__':
             view.setItem(i,3,ref)
     windows.show()
     sys.exit(app.exec_())
+'''
+    for i in range(len(bommerge)):
+        ref2 = str(bommerge.iloc[i,7])
+        print(bommerge[bommerge.columns[3]])
+        if ref2 not in bommerge[bommerge.columns[3]].values.tolist():
+                ref1 = QTableWidgetItem(str(bommerge.iloc[i,7]))
+                ref1.setBackground(QBrush(Qt.red))
+                view.setItem(i,7,ref1)
+        for j in range(len(bommerge)):
+            lookuparray = str(bommerge.iloc[j,3])
+            if lookuparray == ref2:
+                bom2pn = str(bommerge.iloc[i,5])
+                bom1pn = str(bommerge.iloc[j,1])
+                if bom1pn != bom2pn:
+                    ref = QTableWidgetItem(str(bommerge.iloc[i,7]))
+                    ref.setBackground(QBrush(Qt.red))
+                    view.setItem(i,7,ref)
+'''
+
+    
+
 
 '''    
     model = pandasModel(bommerge)

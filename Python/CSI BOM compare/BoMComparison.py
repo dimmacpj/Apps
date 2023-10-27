@@ -100,7 +100,9 @@ class mainWin(QtWidgets.QMainWindow):
 #function to compare two BoMs
     def compareBoMs(self):
         path1 = self.bomPath1.text()
+        BoMNAME1 = pd.read_excel(path1).iloc[0,0]
         path2 = self.bomPath2.text()
+        BoMNAME2 = pd.read_excel(path2).iloc[0,0]
         BOMOne = pd.read_excel(path1, usecols=['Level','Item', 'Description', 'Ref Designator'],
                    dtype={'Level': str, 'Item': str, 'Description': str, 'Ref Designator': str}).dropna(
                        how='all').reset_index(drop=True)
@@ -108,8 +110,10 @@ class mainWin(QtWidgets.QMainWindow):
         BOMTwo = pd.read_excel(path2, usecols=['Level','Item', 'Description', 'Ref Designator'],
                    dtype={'Level': str, 'Item': str, 'Description': str, 'Ref Designator': str}).dropna(
                        how='all').reset_index(drop=True)
-        df2 = BOMTwo.sort_values(by=['Level', 'Ref Designator']).reset_index(drop=True)
-        self.Result = df1.merge(df2, on=['Level', 'Ref Designator'], how='outer').replace(np.nan, None)
+        df2 = BOMTwo.sort_values(by=['Level', 'Ref Designator',]).reset_index(drop=True)
+        self.Result = df1.merge(df2, left_on=['Level', 'Ref Designator','Item'], right_on=['Level', 'Ref Designator','Item'], how='outer',suffixes=('_'+BoMNAME1,'_'+BoMNAME2)).replace(np.nan, 'None')
+        self.Result = self.Result.sort_values(by=['Level','Ref Designator','Item'])
+        self.Result = self.Result.drop_duplicates(subset=['Item','Description_'+BoMNAME1,'Ref Designator','Description_'+BoMNAME2]).reset_index(drop=True)
         #self.ResultLength = len(self.Result)
         #self.Result['Different Part'] = np.where(self.Result['Item_x'] != self.Result['Item_y'], 'Yes!!!', '')
         #self.model = TableModel(self.Result)
@@ -123,7 +127,7 @@ class mainWin(QtWidgets.QMainWindow):
             for j in range(colums):
                 item = QTableWidgetItem(str(self.Result.iloc[i,j]))
                 self.resultTable.setItem(i,j,item)
-            bom1PN = str(self.Result.iloc[i,1])
+            bom1PN = str(self.Result.iloc[i,2])
             bom2PN = str(self.Result.iloc[i,4])
             if bom1PN != bom2PN:
                 ref = QTableWidgetItem(str(self.Result.iloc[i,3]))
