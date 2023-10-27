@@ -1,7 +1,6 @@
 #To do
 #Add save file dialog
 #add pop up when save file without data in Result
-import sys
 from pathlib import Path
 from PyQt5 import QtWidgets
 from PyQt5.QtGui import *
@@ -91,7 +90,7 @@ class mainWin(QtWidgets.QMainWindow):
         df2 = BOMTwo.sort_values(by=['Level', 'Ref Designator','Item']).replace(np.nan, 'Missing Info').reset_index(drop=True)
         self.Result = df1.merge(df2, on=['Level','Item','Ref Designator'], how='outer',
                                 suffixes=('_'+BoMNAME1,'_'+BoMNAME2)).replace(np.nan, 'Not in BoM')
-        self.Result = self.Result.sort_values(by=['Level','Ref Designator','Item'])
+        self.Result = self.Result.sort_values(by=['Level','Item','Ref Designator'])
         #self.Result = self.Result.drop_duplicates(subset=['Item','Description_'+BoMNAME1,'Ref Designator','Description_'+BoMNAME2]).reset_index(drop=True)
         row = len(self.Result)
         colums = len(self.Result.columns)
@@ -157,12 +156,3 @@ class mainWin(QtWidgets.QMainWindow):
         else:
             event.ignore()
 
-def main():
-    app = QApplication(sys.argv)
-    app.setFont(QFont('Arial', 9))
-    ex = mainWin()
-    ex.show()
-    sys.exit(app.exec())
-
-if __name__ == '__main__':
-    main()
