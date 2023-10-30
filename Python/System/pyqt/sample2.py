@@ -117,6 +117,7 @@ if __name__ == '__main__':
         for j in range(len(bommerge.columns)):
             item = QTableWidgetItem(str(bommerge.iloc[i,j]))
             view.setItem(i,j,item)
+            view.horizontalHeader().setSectionResizeMode(j,QHeaderView.ResizeToContents)
             missingInfo = str(bommerge.iloc[i,j])
             if missingInfo == 'Missing Info':
                 ref = QTableWidgetItem(str(bommerge.iloc[i,j]))
@@ -138,6 +139,7 @@ if __name__ == '__main__':
         #    ref = QTableWidgetItem(str(bommerge.iloc[i,3]))
         #    ref.setBackground(QBrush(Qt.red))
         #    view.setItem(i,3,ref)
+    
     windows.show()
     sys.exit(app.exec_())
 '''

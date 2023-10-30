@@ -31,6 +31,7 @@ class mainWin(QtWidgets.QMainWindow):
         mainWidget = QWidget(self)
         vBoxMain = QVBoxLayout()
 #First BoM excel path
+        self.openFilePath = 'C:\\'
         bomBox1 = self.createBoMPathWidget('Open the excel file of the first Indented Current BoM', 1)
 #Second BoM excel path
         bomBox2 = self.createBoMPathWidget('Open the excel file of the second Indented Current BoM', 2)
@@ -62,7 +63,7 @@ class mainWin(QtWidgets.QMainWindow):
         mainWidget.setLayout(vBoxMain)
         self.setCentralWidget(mainWidget)
 #set main window size and position
-        self.resize(1600, 1000)
+        self.resize(1000, 800)
         self.setWindowTitle('BoM Compare')
         self.center()
         self.show()
@@ -102,6 +103,7 @@ class mainWin(QtWidgets.QMainWindow):
             for j in range(colums):
                 item = QTableWidgetItem(str(self.Result.iloc[i,j]))
                 self.resultTable.setItem(i,j,item)
+                self.resultTable.horizontalHeader().setSectionResizeMode(j,QHeaderView.ResizeToContents)
                 if str(self.Result.iloc[i,j]) == 'Missing Info':
                     ref = QTableWidgetItem(str(self.Result.iloc[i,j]))
                     ref.setBackground(QBrush(Qt.yellow))
@@ -128,7 +130,7 @@ class mainWin(QtWidgets.QMainWindow):
             hBox.addWidget(self.bomPath1)
             hBox.addStretch()
             bomButton1 = QPushButton('Open')
-            bomButton1.clicked.connect(lambda ch,order=order: self.openFile(order))
+            bomButton1.clicked.connect(lambda ch,order=order: self.openFile(order,self.openFilePath))
             hBox.addWidget(bomButton1)
         elif order == 2:
             self.bomPath2 = QLineEdit()
@@ -136,15 +138,16 @@ class mainWin(QtWidgets.QMainWindow):
             hBox.addWidget(self.bomPath2)
             hBox.addStretch()
             bomButton2 = QPushButton('Open')
-            bomButton2.clicked.connect(lambda ch,order=order: self.openFile(order))
+            bomButton2.clicked.connect(lambda ch,order=order: self.openFile(order,self.openFilePath))
             hBox.addWidget(bomButton2)
         bomBox.addLayout(hBox)
         return bomBox
 #function to open excel file path
-    def openFile(self, buttonNumber):
-        excelFile, unUse = QFileDialog.getOpenFileName(self, 'Select a File', r'C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\','Excel (*.xlsx)')
+    def openFile(self, buttonNumber,openPath):
+        excelFile, unUse = QFileDialog.getOpenFileName(self, 'Select a File', openPath,'Excel (*.xlsx)')
         if excelFile:
             path = Path(excelFile)
+            self.openFilePath = str(Path(excelFile).parent)
             if buttonNumber == 1:
                 self.bomPath1.setText(str(path))  
             elif buttonNumber == 2:
