@@ -167,6 +167,8 @@ class mainWin(QtWidgets.QMainWindow):
             self.Result = pd.concat([desiMergeUniqNew,nodesiMergeUniq])
             self.Result['Level'] = self.Result['Level'].astype(str)
             self.Result = self.Result.sort_values(by=['Level','Ref Designator','Item_'+BoMNAME1,'Item_'+BoMNAME2]).reset_index(drop=True)
+        #Delete level 0 which is the very top level item name
+        self.Result = self.Result.loc[self.Result['Level'].astype(str) != str(0)]
         #Show PD in table widget
         row = len(self.Result)
         colums = len(self.Result.columns)
