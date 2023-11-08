@@ -35,6 +35,14 @@ class mainWin(QtWidgets.QMainWindow):
         bomBox1 = self.createBoMPathWidget('Open the excel file of the first Indented Current BoM', 1)
 #Second BoM excel path
         bomBox2 = self.createBoMPathWidget('Open the excel file of the second Indented Current BoM', 2)
+#Result label and check box
+        labelAndBoX = QHBoxLayout()
+        resultLabel = QLabel('Result')
+        self.showAllBoX = QCheckBox('Show all items')
+        labelAndBoX.addWidget(resultLabel)
+        labelAndBoX.addStretch(1)
+        labelAndBoX.addWidget(self.showAllBoX)
+        labelAndBoX.addStretch()
 #Compare result table
         self.resultTable = QTableWidget()
         #self.resultTable = QtWidgets.QTableView()
@@ -57,6 +65,7 @@ class mainWin(QtWidgets.QMainWindow):
 #add all of above components into main layout
         vBoxMain.addLayout(bomBox1)
         vBoxMain.addLayout(bomBox2)
+        vBoxMain.addLayout(labelAndBoX)
         vBoxMain.addWidget(self.resultTable)
         #vBoxMain.addStretch(10)
         vBoxMain.addLayout(buttonBox)
@@ -78,22 +87,70 @@ class mainWin(QtWidgets.QMainWindow):
         self.Result.to_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\Result.xlsx')
 #function to compare two BoMs
     def compareBoMs(self):
+        #reset table
+        self.resultTable.setRowCount(0)
+        #Get BoM path and name
         path1 = self.bomPath1.text()
         BoMNAME1 = pd.read_excel(path1).iloc[0,0]
         path2 = self.bomPath2.text()
         BoMNAME2 = pd.read_excel(path2).iloc[0,0]
+        #A well sorted BoM 1
         BOMOne = pd.read_excel(path1, usecols=['Level','Item', 'Description', 'Ref Designator'],
                    dtype={'Level': str, 'Item': str, 'Description': str, 'Ref Designator': str}).dropna(
                        how='all').reset_index(drop=True)
         df1 = BOMOne.sort_values(by=['Level', 'Ref Designator','Item']).replace(np.nan, 'Missing Info').reset_index(drop=True)
+        #A well sorted BoM 2
         BOMTwo = pd.read_excel(path2, usecols=['Level','Item', 'Description', 'Ref Designator'],
                    dtype={'Level': str, 'Item': str, 'Description': str, 'Ref Designator': str}).dropna(
                        how='all').reset_index(drop=True)
         df2 = BOMTwo.sort_values(by=['Level', 'Ref Designator','Item']).replace(np.nan, 'Missing Info').reset_index(drop=True)
-        self.Result = df1.merge(df2, on=['Level','Item','Ref Designator'], how='outer',
-                                suffixes=('_'+BoMNAME1,'_'+BoMNAME2)).replace(np.nan, 'Not in BoM')
-        self.Result = self.Result.sort_values(by=['Level','Ref Designator','Item'])
-        #self.Result = self.Result.drop_duplicates(subset=['Item','Description_'+BoMNAME1,'Ref Designator','Description_'+BoMNAME2]).reset_index(drop=True)
+        #check how to show the result, only different parts or all parts
+        if self.showAllBoX.checkState() == 2:
+            print('checked')
+        elif self.showAllBoX.checkState() == 0:
+            print('Not checked')
+        #new version code start
+        #New df contains all parts that has ref designator in BoM 1
+        df1Desi = df1[df1['Ref Designator']!='Missing Info']
+        #New df contains all parts that doesn't have ref designator in BoM 1
+        df1Nodesi = df1[df1['Ref Designator']=='Missing Info'].reset_index(drop=True)
+        #New df contains all parts that has ref designator in BoM 2
+        df2Desi = df2[df2['Ref Designator']!='Missing Info']
+        #New df contains all parts that doesn't have ref designator in BoM 2
+        df2Nodesi = df2[df2['Ref Designator']=='Missing Info'].reset_index(drop=True)
+        #Compare df1Nodesi with df2Nodesi, and only keep the unique parts
+        nodesiuniq1 = df1Nodesi[~df1Nodesi['Item'].isin(df2Nodesi['Item'])]
+        nodesiuniq2 = df2Nodesi[~df2Nodesi['Item'].isin(df1Nodesi['Item'])]
+        #Merge df1Desi and df2Desi, then delete the row which has same PN
+        desiMerge = df1Desi.merge(df2Desi, on=['Level','Ref Designator'], how='outer',suffixes=('_'+BoMNAME1,'_'+BoMNAME2)).replace(np.nan, 'Not in BoM').sort_values(by=['Level','Ref Designator'])
+        desiMergeUniq = desiMerge.copy()
+        desiMergeUniq = desiMergeUniq[desiMergeUniq['Item_'+BoMNAME1] != desiMergeUniq['Item_'+BoMNAME2]]
+        '''
+        for i in range(len(desiMerge)):
+            if desiMerge.iloc[i,1] == desiMerge.iloc[i,4]:
+                desiMergeUniq = desiMergeUniq.drop(i)
+        '''
+        #Combine nodesiuniq1 and nodesiuniq2, sort values, reset index, replace values, rename columns
+        nodesiMergeUniq = pd.concat([nodesiuniq1.rename({'Item':'Item_'+BoMNAME1,'Description':'Description_'+BoMNAME1},axis=1),nodesiuniq2.rename({'Level':'Level2','Item':'Item_'+BoMNAME2,'Description':'Description_'+BoMNAME2,'Ref Designator':'Ref2'},axis=1)],axis=1).reset_index(drop=True)
+        nodesiMergeUniq['Level'] = nodesiMergeUniq['Level'].replace(np.nan,'0').str.replace(r'\D+','').astype(int) + nodesiMergeUniq['Level2'].replace(np.nan,'0').str.replace(r'\D+','').astype(int)
+        nodesiMergeUniq = nodesiMergeUniq.drop(columns=['Level2','Ref2'])
+        nodesiMergeUniq['Ref Designator'] = nodesiMergeUniq['Ref Designator'].replace(np.nan,'Missing Info')
+        nodesiMergeUniq['Item_'+BoMNAME1] = nodesiMergeUniq['Item_'+BoMNAME1].replace(np.nan,'Not in BoM')
+        nodesiMergeUniq['Item_'+BoMNAME2] = nodesiMergeUniq['Item_'+BoMNAME2].replace(np.nan,'Not in BoM')
+        nodesiMergeUniq['Description_'+BoMNAME1] = nodesiMergeUniq['Description_'+BoMNAME1].replace(np.nan,'Not in BoM')
+        nodesiMergeUniq['Description_'+BoMNAME2] = nodesiMergeUniq['Description_'+BoMNAME2].replace(np.nan,'Not in BoM')
+        #Combine desiMergeUniq and nodesiMergeUniq to form the result
+        self.Result = pd.concat([desiMergeUniq,nodesiMergeUniq])
+        self.Result['Level'] = self.Result['Level'].astype(str)
+        self.Result = self.Result.sort_values(by=['Level','Ref Designator','Item_'+BoMNAME1,'Item_'+BoMNAME2]).reset_index(drop=True)
+        print(self.Result)
+        #new version code end
+
+        #self.Result = df1.merge(df2, on=['Level','Item','Ref Designator'], how='outer',
+        #                        suffixes=('_'+BoMNAME1,'_'+BoMNAME2)).replace(np.nan, 'Not in BoM')
+        #self.Result = self.Result.sort_values(by=['Level','Item','Ref Designator'])
+        
+        #Show PD in table widget
         row = len(self.Result)
         colums = len(self.Result.columns)
         self.resultTable.setRowCount(row)
@@ -107,13 +164,13 @@ class mainWin(QtWidgets.QMainWindow):
                 if str(self.Result.iloc[i,j]) == 'Missing Info':
                     ref = QTableWidgetItem(str(self.Result.iloc[i,j]))
                     ref.setBackground(QBrush(Qt.yellow))
-                    self.resultTable.setItem(i,3,ref)
-            bom1PN = str(self.Result.iloc[i,2])
+                    self.resultTable.setItem(i,j,ref)
+            bom1PN = str(self.Result.iloc[i,1])
             bom2PN = str(self.Result.iloc[i,4])
             if bom1PN == 'Not in BoM':
-                ref = QTableWidgetItem(str(self.Result.iloc[i,2]))
+                ref = QTableWidgetItem(str(self.Result.iloc[i,1]))
                 ref.setBackground(QBrush(Qt.red))
-                self.resultTable.setItem(i,2,ref)
+                self.resultTable.setItem(i,1,ref)
             if bom2PN == 'Not in BoM':
                 ref = QTableWidgetItem(str(self.Result.iloc[i,4]))
                 ref.setBackground(QBrush(Qt.red))
