@@ -111,6 +111,8 @@ class mainWin(QtWidgets.QMainWindow):
         else:
             #reset table
             self.resultTable.clear()
+            desiMerge = pd.DataFrame()
+            nodesiMerge = pd.DataFrame()
             #Get BoM path and name
             path1 = self.bomPath1.text()
             BoMNAME1 = pd.read_excel(path1).iloc[0,0]
@@ -184,6 +186,8 @@ class mainWin(QtWidgets.QMainWindow):
         else:
             #reset table
             self.resultTable.clear()
+            desiMergeUniqNew = pd.DataFrame()
+            nodesiMergeUniq = pd.DataFrame()
             #Get BoM path and name
             path1 = self.bomPath1.text()
             BoMNAME1 = pd.read_excel(path1).iloc[0,0]
