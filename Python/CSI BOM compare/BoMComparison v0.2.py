@@ -119,15 +119,26 @@ class mainWin(QtWidgets.QMainWindow):
         
         #check how to show the result, only different parts or all parts
         if self.showAllBoX.checkState() == 2:
-            '''
+            
             #To be modified
             refdesList = desiMerge['Ref Designator'].unique().tolist()
             desiMergeNew = pd.DataFrame(columns=desiMerge.columns)
             for refdes in refdesList:
                 subdf = desiMerge.loc[desiMerge['Ref Designator'] == refdes]
-                subdf = subdf[subdf['Item_'+BoMNAME1]==subdf['Item_'+BoMNAME2]]
+                
+                tflist = list()
+                for i in range(len(subdf)):
+                    
+                    if subdf.iloc[i,1]==subdf.iloc[i,4]:
+                        tflist.append(True)
+                    else:
+                        tflist.append(False)
+                print(tflist)
+                subdf = subdf.loc[tflist]
+                print(subdf)
                 desiMergeNew = pd.concat([desiMergeNew, subdf])
-            '''
+                print(desiMergeNew)
+            
             #Combine df1Nodesi and df2Nodesi, sort values, reset index, replace values, rename columns
             nodesiMerge = pd.concat([df1Nodesi.rename({'Item':'Item_'+BoMNAME1,'Description':'Description_'+BoMNAME1},axis=1),df2Nodesi.rename({'Level':'Level2','Item':'Item_'+BoMNAME2,'Description':'Description_'+BoMNAME2,'Ref Designator':'Ref2'},axis=1)],axis=1).reset_index(drop=True)
             nodesiMerge['Level'] = nodesiMerge['Level'].replace(np.nan,'0').str.replace(r'\D+','').astype(int) + nodesiMerge['Level2'].replace(np.nan,'0').str.replace(r'\D+','').astype(int)
@@ -138,7 +149,7 @@ class mainWin(QtWidgets.QMainWindow):
             nodesiMerge['Description_'+BoMNAME1] = nodesiMerge['Description_'+BoMNAME1].replace(np.nan,'Not in BoM')
             nodesiMerge['Description_'+BoMNAME2] = nodesiMerge['Description_'+BoMNAME2].replace(np.nan,'Not in BoM')
             #Combine desiMergeUniq and nodesiMergeUniq to form the result
-            self.Result = pd.concat([desiMerge,nodesiMerge])
+            self.Result = pd.concat([desiMergeNew,nodesiMerge])
             self.Result['Level'] = self.Result['Level'].astype(str)
             self.Result = self.Result.sort_values(by=['Level','Ref Designator','Item_'+BoMNAME1,'Item_'+BoMNAME2]).reset_index(drop=True)
         elif self.showAllBoX.checkState() == 0:
