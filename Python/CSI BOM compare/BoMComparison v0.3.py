@@ -19,6 +19,7 @@ class mainWin(QtWidgets.QMainWindow):
 
     def initWin(self):
         self.ResultLength = 0
+        self.Result = pd.DataFrame()
 #create menu bar button
         saveResult = QAction('Save to .xlsx file', self)
         saveResult.setShortcut('Ctrl + S')
@@ -38,14 +39,14 @@ class mainWin(QtWidgets.QMainWindow):
 #Result label, check box and refresh button
         labelAndBoX = QHBoxLayout()
         resultLabel = QLabel('Result')
-        self.clearButton = QPushButton('Clear')
-        self.clearButton.clicked.connect(self.clearAll)
+        #self.clearButton = QPushButton('Clear')
+        #self.clearButton.clicked.connect(self.clearAll)
         self.refreshButton = QPushButton('Show all items')
         self.refreshButton.setCheckable(True)
         self.refreshButton.clicked.connect(self.changeResult)
         labelAndBoX.addWidget(resultLabel)
         labelAndBoX.addStretch(1)
-        labelAndBoX.addWidget(self.clearButton)
+        #labelAndBoX.addWidget(self.clearButton)
         labelAndBoX.addWidget(self.refreshButton)
         labelAndBoX.addStretch()
 #Compare result table
@@ -85,14 +86,13 @@ class mainWin(QtWidgets.QMainWindow):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 #function to compare result to xlsx
-    def saveToXLSX(self):
-        if not hasattr(mainWin,'Result'):
+    def saveToXLSX(self):       
+        if self.Result.empty:
             QMessageBox.information(self,'Information','Please compare the BoMs first!')
         else:
-            dir_name = QFileDialog.getExistingDirectory(self, 'Select a Directory')
-            if dir_name:
-                self.openFilePath = str(Path(dir_name))
-            self.Result.to_excel(self.openFilePath+'\\Result.xlsx')
+            fileName, unuse = QFileDialog.getSaveFileName(self,'Save As',self.openFilePath,'Excel (*.xlsx)')
+            if fileName:
+                self.Result.to_excel(str(fileName))
 #function to clear everything, path and result
     def clearAll(self):
         self.bomPath1.setText('')
@@ -289,7 +289,7 @@ class mainWin(QtWidgets.QMainWindow):
         return bomBox
 #function to open excel file path
     def openFile(self, buttonNumber,openPath):
-        excelFile, unUse = QFileDialog.getOpenFileName(self, 'Select a File', openPath,'Excel (*.xlsx)')
+        excelFile, unUse = QFileDialog.getOpenFileName(self, 'Select a File', openPath,'','Excel (*.xlsx)')
         if excelFile:
             path = Path(excelFile)
             self.openFilePath = str(Path(excelFile).parent)
