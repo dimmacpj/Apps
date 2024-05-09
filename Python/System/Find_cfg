@@ -1,22 +1,22 @@
 import glob, os
 import pandas as pd
 
-path = 'C:\\Users\\neal.peng\\Documents\\Pandas\\System\\'
-MyDir1 = "N:\sysprod\Systems Infomation\Compact Configurations"
-MyDir2 = "N:\sysprod\Systems Infomation\EM4x Configurations"
+path = 'C:\\Users\\neal.peng\\Documents\Programming\\Python\\System\\'
+MyDir1 = "srvfile01\Shares"
+#MyDir2 = "\\srvfile01\Shares"
 
 ConfigFilenames = []
 EM4XFilenames = []
 
 os.chdir(MyDir1)
-for file in glob.glob("*.sm3x"):
+for file in glob.glob("*HVC22*"):
     ConfigFilenames.append(file)
-
+'''
 os.chdir(MyDir2)
 for file in glob.glob("*.em4x"):
     EM4XFilenames.append(file)
-    
-ConfigFilenames.extend(EM4XFilenames)
+'''    
+#ConfigFilenames.extend(EM4XFilenames)
 #print(ConfigFilenames)
 
 Cfg = pd.DataFrame(data={'Config File Name': ConfigFilenames})

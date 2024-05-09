@@ -85,7 +85,7 @@ class mainWin(QtWidgets.QMainWindow):
         cp = QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
         self.move(qr.topLeft())
-#function to compare result to xlsx
+#function to save result to xlsx
     def saveToXLSX(self):       
         if self.Result.empty:
             QMessageBox.information(self,'Information','Please compare the BoMs first!')

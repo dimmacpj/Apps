@@ -14,6 +14,20 @@ df3 = pd.read_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI B
                    dtype={'Level': str, 'Item': str, 'Description': str, 'Qty Per': str, 'U/M': str, 'Per': str}).dropna(how='all').reset_index(drop=True)
 df4 = df3.replace(np.nan, 'Missing Info').reset_index(drop=True)
 
+bom1level1 = df2.loc[df2['Level'] == '1'].reset_index(drop=True)
+#print(bom1level1)
+bom1level2 = df2.loc[df2['Level'] == '2'].reset_index(drop=True)
+#print(bom1level2)
+bom2level1 = df4.loc[df4['Level'] == '1'].reset_index(drop=True)
+#print(bom2level1)
+bom2level2 = df4.loc[df4['Level'] == '2'].reset_index(drop=True)
+#print(bom2level2)
+bom1l1uniq = bom1level1[~bom1level1['Item'].isin(bom2level1['Item'])]
+bom2l1uniq = bom2level1[~bom2level1['Item'].isin(bom1level1['Item'])]
+bom1l2uniq = bom1level2[~bom1level2['Item'].isin(bom2level2['Item'])]
+bom2l2uniq = bom2level2[~bom2level2['Item'].isin(bom1level2['Item'])]
+level1Compare = pd.concat([bom1l1uniq,bom2l1uniq.rename({'Level':'Level2'},axis=1)],axis=1)
+level2Compare = pd.concat([bom1l2uniq,bom2l2uniq.rename({'Level':'Level2'},axis=1)],axis=1)
 '''
 df2Desi = df2[df2['Ref Designator']!='Missing Info']
 df2Nodesi = df2[df2['Ref Designator']=='Missing Info'].reset_index(drop=True)
@@ -51,8 +65,10 @@ bommerge = bommerge.sort_values(by=['Level']).reset_index(drop=True)
 #Nodesimerge.to_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\Nodesimerge.xlsx')
 #bommerge.to_excel('C:\\Users\\neal.peng\\Documents\\Programming\\Python\\CSI BOM compare\\bommerge.xlsx')
 '''
-bommerge = pd.concat([df2,df4.rename({'Level':'Level2'},axis=1)],axis=1)
-bommerge = bommerge.loc[bommerge['Level'].astype(str) != str(0)]
+print(level1Compare)
+print(level2Compare)
+bommerge = pd.concat([level1Compare,level2Compare])
+#bommerge = bommerge.loc[bommerge['Level'].astype(str) != str(0)]
 class pandasModel(QAbstractTableModel):
 
     def __init__(self, data):
