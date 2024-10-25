@@ -90,17 +90,31 @@ def WFsPlot(inductanceL, switchPeriod, psPeriod, mcVMajor, mcVMinor, secVrep, ta
     line4, = axs3.plot(*zip(*priIWF), color = 'tab:green')
     axs3.set_ylabel('Current (A)', color = 'tab:green')
     axs3.tick_params(axis = 'y', labelcolor = 'tab:green')
+    axs3.set_ylim(-50, 50)
 
-    #fig.tight_layout()      # Otherwise the area between the two subplots would be overlapped
+    #fig.tight_layout()      # Otherwise the area between the two subplots would be overlapped  
     
     # Adjust figure to make room for the sliders
     fig.subplots_adjust(bottom = 0.3)
     # Create a horizontal slider for phase shift
     axPhaseShift = fig.add_axes([0.15, 0.15, 0.15, 0.01])
     ps_Slider = Slider(ax=axPhaseShift, label='Phase Shift (out of 0.5)', valmin= 0, valmax= 0.5, valinit=psPeriod/(switchPeriod/2)*0.5)
+    # Create a horizontal slider for AC angle
+    axACAngle = fig.add_axes([0.15, 0.2, 0.15, 0.01])
+    ac_Slider = Slider(ax=axACAngle, label='AC Angle', valmin=0, valmax=30, valinit=10)
+    # Create a horizontal slider for AC phase to phase voltage
+    axACVoltage = fig.add_axes([0.15, 0.1, 0.15, 0.1])
+    acV_Slider = Slider(ax=axACVoltage, label='Input Phase to Phase Voltage', valmin = 380, valmax=600, valinit=ipVamplitude/np.sqrt(2)*np.sqrt(3))
     
     def update(val):
         print(ps_Slider.val)
+        print(ac_Slider.val)
+        print(acV_Slider.val)
+        ipVaInst = ipVamplitude*np.cos(ac_Slider.val/180*np.pi)       # Instantaneous Phase A voltage at 10 degree phase angle
+        ipVbInst = ipVamplitude*np.cos(ac_Slider.val/180*np.pi + 2/3*np.pi)         # Instantaneous Phase B voltage at 10 degree phase angle
+        ipVcInst = ipVamplitude*np.cos(ac_Slider.val/180*np.pi - 2/3*np.pi)         # Instantaneous Phase C voltage at 10 degree phase angle
+        mcVMajor = np.sort(abs(np.array([ipVaInst, ipVbInst, ipVcInst])))[2] + np.sort(abs(np.array([ipVaInst, ipVbInst, ipVcInst])))[1]    # Major voltage of Matrix converter's output  
+        mcVMinor = np.sort(abs(np.array([ipVaInst, ipVbInst, ipVcInst])))[2] + np.sort(abs(np.array([ipVaInst, ipVbInst, ipVcInst])))[0]    # Minor voltage of Matrix converter's output
         psPeriod = ps_Slider.val/0.5*(switchPeriod/2)
         print(psPeriod)
         tMajor, tMinor, iMJAVG, iMNAVG = MTDABcal(inductanceL, switchPeriod, psPeriod, mcVMajor, mcVMinor, secVrep, targetIRatio, ipVaInst, ipVbInst, ipVcInst, opPower)
@@ -123,16 +137,15 @@ def WFsPlot(inductanceL, switchPeriod, psPeriod, mcVMajor, mcVMinor, secVrep, ta
         line3.set_data(*zip(*inductorVWF))
         line4.set_data(*zip(*priIWF))
         
-        print(i2)
-        axs3.set_ylim(int(-i2), int(i2))
-        axs3.margins(-2)
-        
     ps_Slider.on_changed(update)
+    ac_Slider.on_changed(update)
+    acV_Slider.on_changed(update)
     
     plt.grid(True,linestyle="-",color="gray",linewidth="0.5",axis='both')
     plt.show()
 
 def MTDABcal(inductanceL, switchPeriod, psPeriod, mcVMajor, mcVMinor, secVrep, targetIRatio, ipVaInst, ipVbInst, ipVcInst, opPower):
+    
     """ Function to calculate the Major current and the Minor current based on knowing the ratio of the two."""
     
     Vmj, Vmn, Vs, Ll, Tps, Tmj, Tmn, Ts = sp.symbols('Vmj, Vmn, Vs, Ll, Tps, Tmj, Tmn, Ts', postive = True)
@@ -151,10 +164,15 @@ def MTDABcal(inductanceL, switchPeriod, psPeriod, mcVMajor, mcVMinor, secVrep, t
     print(i3)
     Tzero = (i1 - i3) * inductanceL / (-secVrep) 
     periodEquation = Tmj + Tmn + Tzero - switchPeriod/2
+    print(periodEquation)
     actualIRatio = sp.simplify((iMN/iMJ).expand().subs([(Vmn, mcVMinor), (Vmj, mcVMajor), (Vs, secVrep), (Tps, psPeriod), (Ll, inductanceL)]))  
-
-
-    periods = sp.solve([actualIRatio - targetIRatio, periodEquation], [Tmj, Tmn])
+    iMJArea =  (i1 + i2)*(Tmj-psPeriod)/2
+    iMNArea = (i2 + i3)*Tmn/2
+    iZeroArea = (i1 + i3) * Tzero /2
+    eq1 = (iMJArea + iMNArea + iZeroArea)/(switchPeriod/2) - 100
+    print(eq1)
+    periods = sp.solve([eq1, periodEquation], [Tmj, Tmn])
+    #periods = sp.solve([actualIRatio - targetIRatio, periodEquation], [Tmj, Tmn])
     print(periods)
     for i in range(len(periods)):
         if periods[i][0] > periods[i][1]:    
