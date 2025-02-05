@@ -39,14 +39,17 @@
 
 #define TASK_RATE (1) /* 1ms / 1kHz */
 #define TASK_1S_PERIOD (1000)
-#define FAN_RAMP_TIME (60000)  // [ms]
 #define FAN_START_TIME (5000) // [ms]
-#define FAN_OFF_SPEED (0.0)
-#define FAN_FULL_SPEED (1.0)
-#define FAN_START_SPEED (0.15)
-#define FAN_SPEED_INCREAMENT (0.000014)
-#define FAN_OFF_TEMP (35.0)
-#define FAN_ON_TEMP (40.0)
+
+#define FAN_OFF_SPEED (0.0f)
+#define FAN_FULL_SPEED (1.0f)
+#define FAN_START_SPEED (0.15f)
+#define FAN_SPEED_RAMP_RATE (0.000014f)
+#define FAN_FULL_SPEED_TEMP (50.0f)
+#define FAN_ON_OFF_TEMP (40.0f)
+#define FAN_ON_TEMP (40.0f)
+#define FAN_OFF_TEMP (35.0f)
+
 
 /* This task must be suspended until EEPROM has been initialised */
 portTASK_FUNCTION(Control_Task, pvParameters)
@@ -55,7 +58,6 @@ portTASK_FUNCTION(Control_Task, pvParameters)
   uint32_t cnt_1s = 1;                      // counter to time 1s periods
   uint32_t fan1_on_blank_time = 0;
   uint32_t fan2_on_blank_time = 0;
-  uint32_t fan_ramp_timer = 0;
   bool fan1_on = false;
   bool fan2_on = false;
 
@@ -68,47 +70,38 @@ portTASK_FUNCTION(Control_Task, pvParameters)
   last_wake_time = xTaskGetTickCount();
   /* drop into the main control loop */
   while (1)
-  {   
+  {
+//#if 0 // monitor control
+    if (fans_on)
+    { // Turn fan(s) on when sent a CM = 1 message
+      ramp_fan_up(fan_speed_demand);
+    }
+    else
+    { //// Turn fan(s) off when sent a CM = 0 message (if two ports that have had a CM=1, need both to send a CM=0)
+      if (ntc_1_temperature < FAN_ON_OFF_TEMP)
+      {
+		ramp_fan_down(fan_speed_demand);
+      }
+      else if (ntc_1_temperature < FAN_FULL_SPEED_TEMP)
+      { // When modules are all off but T1 is above [40]degC turn fans on at 15% speed and linearly increase speed to 100% at [50]degC
+        fan_speed_demand = adjust_fan_speed_by_temp(ntc_1_temperature);
+      }
+      else
+      { //maintain 100% speed above [50]degC
+		ramp_fan_up(fan_speed_demand);
+      }
+    }
+//#else   // temporay control without monitor
     if (ntc_1_temperature >= FAN_ON_TEMP) 
     {   // Turn fan(s) on at [40]degC
-      if ((fan_ramp_timer == 0) && (fan_speed_demand < FAN_START_SPEED))
-      {   // Fans ramp from 15% speed to 100% speed over 60s
-        fan_speed_demand = FAN_START_SPEED;
-        fan_ramp_timer++;
-      }
-      else if ((fan_ramp_timer <= FAN_RAMP_TIME) && (fan_ramp_timer != 0)) 
-      {
-        fan_speed_demand += FAN_SPEED_INCREAMENT;
-        fan_ramp_timer++;
-      }
-      else if (fan_ramp_timer > FAN_RAMP_TIME)
-      {
-        fan_speed_demand = FAN_FULL_SPEED;
-        fan_ramp_timer = 0;
-      }  
-      else if ((fan_ramp_timer == 0) && (fan_speed_demand > (FAN_FULL_SPEED - FAN_SPEED_INCREAMENT)))
-      {
-        fan_speed_demand = FAN_FULL_SPEED;
-      }
+		ramp_fan_up(fan_speed_demand);
     }
     else if (ntc_1_temperature <= FAN_OFF_TEMP)
     {   // Turn fan(s) off at [35]degC
-      if ((fan_ramp_timer <= FAN_RAMP_TIME) && (fan_speed_demand > (FAN_OFF_SPEED + FAN_SPEED_INCREAMENT)))
-      {   // Fans ramp from 100% speed to 15% speed over 60s then turns off
-        fan_speed_demand -= FAN_SPEED_INCREAMENT;
-        fan_ramp_timer++;
-      }
-      else if (fan_ramp_timer > FAN_RAMP_TIME)
-      {
-        fan_speed_demand = FAN_OFF_SPEED;
-        fan_ramp_timer = 0;
-      }
-      else if ((fan_ramp_timer == 0) && (fan_speed_demand < (FAN_OFF_SPEED + FAN_SPEED_INCREAMENT)))
-      {
-        fan_speed_demand = FAN_OFF_SPEED;
-      }  
+		ramp_fan_down(fan_speed_demand);
     } 
-    
+//#endif
+
     set_fan_speed(fan_speed_demand);
 
     if(fan_speed_demand > FAN_OFF_SPEED)
