@@ -74,13 +74,13 @@ portTASK_FUNCTION(Control_Task, pvParameters)
 //#if 0 // monitor control
     if (fans_on)
     { // Turn fan(s) on when sent a CM = 1 message
-      ramp_fan_up(fan_speed_demand);
+      fan_speed_demand = ramp_fan_up(fan_speed_demand);
     }
     else
     { //// Turn fan(s) off when sent a CM = 0 message (if two ports that have had a CM=1, need both to send a CM=0)
       if (ntc_1_temperature < FAN_ON_OFF_TEMP)
       {
-		ramp_fan_down(fan_speed_demand);
+		fan_speed_demand = ramp_fan_down(fan_speed_demand);
       }
       else if (ntc_1_temperature < FAN_FULL_SPEED_TEMP)
       { // When modules are all off but T1 is above [40]degC turn fans on at 15% speed and linearly increase speed to 100% at [50]degC
@@ -88,17 +88,17 @@ portTASK_FUNCTION(Control_Task, pvParameters)
       }
       else
       { //maintain 100% speed above [50]degC
-		ramp_fan_up(fan_speed_demand);
+		fan_speed_demand = ramp_fan_up(fan_speed_demand);
       }
     }
 //#else   // temporay control without monitor
     if (ntc_1_temperature >= FAN_ON_TEMP) 
     {   // Turn fan(s) on at [40]degC
-		ramp_fan_up(fan_speed_demand);
+		fan_speed_demand = ramp_fan_up(fan_speed_demand);
     }
     else if (ntc_1_temperature <= FAN_OFF_TEMP)
     {   // Turn fan(s) off at [35]degC
-		ramp_fan_down(fan_speed_demand);
+		fan_speed_demand = ramp_fan_down(fan_speed_demand);
     } 
 //#endif
 
